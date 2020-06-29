@@ -1,0 +1,36 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t kwilsonie/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  # - docker run kwilsonie/fib npm test --  --coverage 
+   - docker run -e CI=true kwilsonie/react-test npm test
+
+after_success:
+  - docker build -t kwilsonie/multi-client ./client
+  - docker build -t kwilsonie/multi-nginx ./nginx
+  - docker build -t kwilsonie/multi-server ./server
+  - docker build -t kwilsonie/multi-worker ./worker
+  #login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  #push images
+  - docker push kwilsonie/multi-nginx
+  - docker push kwilsonie/multi-client
+  - docker push kwilsonie/multi-server
+  - docker push kwilsonie/multi-worker
+
+deploy:
+   edge: true
+   provider: elasticbeanstalk 
+   region: us-east-1
+   app: multi-docker
+   env: MultiDocker-env
+   bucket_name: elasticbeanstalk-us-east-1-071485204010
+   bucket_path: docker-fib
+   on:
+      branch: master
+   access_key_id: $AWS_ACCESS_KEY
+   secret_access_key: $AWS_SECRET_KEY
