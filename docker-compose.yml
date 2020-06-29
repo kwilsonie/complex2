@@ -40,6 +40,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+
   nginx:
     depends_on:
       - api
